@@ -11,56 +11,91 @@ document.title = APP_NAME;
 app.innerHTML = APP_NAME;
 app.append(canvas);
 
+const drawEvent = new Event("drawing-changed");
 
 const ctx = canvas.getContext("2d");
 ctx.strokeStyle = "#7a6eff"
 
 const cursor = { active: false, x: 0, y: 0 };
 
+interface point{
+    x: number,
+    y: number
+}
+
+let lines: point[][] = [];
+let newLine: point[] = [];
+
 
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "Clear";
 clearButton.onclick = function () {
-    clear();
+    fullClear();
 };
 app.append(clearButton);
 
 
 
 canvas.addEventListener("mousedown", (e) => {
-    startDraw(e.offsetX, e.offsetY);
+    startDraw();
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    if (cursor.active) {
-        draw(e.offsetX, e.offsetY);
-    }
+    newPoint(e.offsetX, e.offsetY);
 });
 
 canvas.addEventListener("mouseup", (e) => {
     stopDraw();
 });
 
+canvas.addEventListener("drawing-changed", (e) => {
+    draw();
+});
 
-function startDraw(x: number, y: number){
+
+function startDraw(){
     cursor.active = true;
-    cursor.x = x;
-    cursor.y = y;
 }
 
-function draw(newX: number, newY: number){
-    ctx.beginPath();
-    ctx.moveTo(cursor.x, cursor.y);
-    ctx.lineTo(newX, newY);
-    ctx.stroke();
-    cursor.x = newX;
-    cursor.y = newY;
+function newPoint(X: number, Y: number){
+    if (cursor.active) {
+        newLine.push({x: X, y: Y})
+        //draw();
+        canvas.dispatchEvent(drawEvent);
+    }
+}
+
+function draw(){
+    clear();
+    for(const l of lines){
+        drawline(l);
+    }
+    drawline(newLine);
+}
+
+function drawline(line: point[]){
+    if(line.length > 1){
+        ctx.beginPath();
+        ctx.moveTo(line[0].x, line[0].y);
+        for(const p of line){
+            ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+    }
 }
 
 function stopDraw(){
     cursor.active = false;
+    lines.push(newLine);
+    newLine = [];
 }
 
 function clear(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function fullClear(){
+    lines = [];
+    newLine = [];
+    canvas.dispatchEvent(drawEvent);
 }
