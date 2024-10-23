@@ -24,7 +24,22 @@ interface point{
 }
 
 let lines: point[][] = [];
+let redoLines: point[][] = [];
 let newLine: point[] = [];
+
+const undoButton = document.createElement("button");
+undoButton.innerHTML = "Undo";
+undoButton.onclick = function () {
+    undo();
+};
+app.append(undoButton);
+
+const redoButton = document.createElement("button");
+redoButton.innerHTML = "Redo";
+redoButton.onclick = function () {
+    redo();
+};
+app.append(redoButton);
 
 
 const clearButton = document.createElement("button");
@@ -33,6 +48,7 @@ clearButton.onclick = function () {
     fullClear();
 };
 app.append(clearButton);
+
 
 
 
@@ -55,6 +71,7 @@ canvas.addEventListener("drawing-changed", (e) => {
 
 function startDraw(){
     cursor.active = true;
+    redoLines = [];
 }
 
 function newPoint(X: number, Y: number){
@@ -97,5 +114,21 @@ function clear(){
 function fullClear(){
     lines = [];
     newLine = [];
+    redoLines = [];
     canvas.dispatchEvent(drawEvent);
 }
+
+function undo(){
+    if(lines.length > 0){
+        redoLines.push(lines.pop());
+    }
+    canvas.dispatchEvent(drawEvent);
+}
+
+function redo(){
+    if(redoLines.length > 0){
+        lines.push(redoLines.pop());
+    }
+    canvas.dispatchEvent(drawEvent);
+}
+
