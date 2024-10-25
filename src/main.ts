@@ -23,8 +23,31 @@ interface point{
     y: number
 }
 
-let lines: point[][] = [];
-let redoLines: point[][] = [];
+class Line{
+    pts: point[] =[];
+    
+    constructor(p: point){
+        this.pts[0] = p;
+    }
+
+    drag(p: point){
+        this.pts.push(p);
+    }
+
+    display(con: CanvasRenderingContext2D){
+        if(this.pts.length > 1){
+            con.beginPath();
+            con.moveTo(this.pts[0].x, this.pts[0].y);
+            for(const p of this.pts){
+                con.lineTo(p.x, p.y);
+            }
+            con.stroke();
+        }
+    }
+}
+
+let lines: Line[] = [];
+let redoLines: Line[] = [];
 let newLine: point[] = [];
 
 const undoButton = document.createElement("button");
@@ -53,7 +76,7 @@ app.append(clearButton);
 
 
 canvas.addEventListener("mousedown", (e) => {
-    startDraw();
+    startDraw({x: e.offsetX, y: e.offsetY});
 });
 
 canvas.addEventListener("mousemove", (e) => {
@@ -69,14 +92,16 @@ canvas.addEventListener("drawing-changed", (e) => {
 });
 
 
-function startDraw(){
+function startDraw(p: point){
     cursor.active = true;
     redoLines = [];
+    lines.push(new Line(p));
+
 }
 
 function newPoint(X: number, Y: number){
     if (cursor.active) {
-        newLine.push({x: X, y: Y})
+        lines[lines.length-1].drag({x: X, y: Y})
         //draw();
         canvas.dispatchEvent(drawEvent);
     }
@@ -85,25 +110,14 @@ function newPoint(X: number, Y: number){
 function draw(){
     clear();
     for(const l of lines){
-        drawline(l);
+        l.display(ctx);
     }
-    drawline(newLine);
-}
-
-function drawline(line: point[]){
-    if(line.length > 1){
-        ctx.beginPath();
-        ctx.moveTo(line[0].x, line[0].y);
-        for(const p of line){
-            ctx.lineTo(p.x, p.y);
-        }
-        ctx.stroke();
-    }
+    //drawline(newLine);
 }
 
 function stopDraw(){
     cursor.active = false;
-    lines.push(newLine);
+    //lines.push(newLine);
     newLine = [];
 }
 
