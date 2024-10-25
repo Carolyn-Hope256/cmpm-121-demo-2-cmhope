@@ -17,7 +17,11 @@ const moveEvent = new Event("tool-moved");
 const ctx = canvas.getContext("2d");
 ctx.strokeStyle = "#7a6eff"
 ctx.fillStyle = "#7a6eff"
-let strokeSize = 2;
+ctx.font = "30px Arial";
+
+let strokeSize: number = 2;
+let sticker: boolean = false;
+let emoj: string = "";
 
 const cursor = { active: false, x: 0, y: 0 };
 
@@ -35,18 +39,22 @@ interface button{
 class Line{
     pts: point[] =[];
     sSize: number;
+    isSticker: boolean;
+    emoji: string;
     cursor: boolean = false;
     
-    constructor(p: point, s: number, c?: boolean){
+    constructor(p: point, c?: boolean){
         this.pts[0] = p;
-        this.sSize = s;
+        this.sSize = strokeSize;
+        this.isSticker = sticker;
+        this.emoji = emoj;
         if(c){
             this.cursor = c;
         }
     }
 
     drag(p: point){
-        if(this.cursor){
+        if(this.cursor || this.isSticker){
             this.pts[0] = p;
         }else{
             this.pts.push(p);
@@ -54,7 +62,14 @@ class Line{
     }
 
     display(con: CanvasRenderingContext2D){
-        if(this.pts.length > 1){
+        if(this.isSticker){
+            con.fillText(this.emoji, this.pts[0].x, this.pts[0].y, 60);
+        }else if(this.cursor){
+            con.beginPath();
+            con.arc(this.pts[0].x, this.pts[0].y, this.sSize, 0, 2 * Math.PI);
+            con.fill();
+            
+        }else if(this.pts.length > 1){
             con.lineWidth = this.sSize;
             con.beginPath();
             con.moveTo(this.pts[0].x, this.pts[0].y);
@@ -62,25 +77,29 @@ class Line{
                 con.lineTo(p.x, p.y);
             }
             con.stroke();
-        }else if(this.cursor){
-            con.beginPath();
-            con.arc(this.pts[0].x, this.pts[0].y, this.sSize, 0, 2 * Math.PI);
-            con.fill();
-            
         }
+    }
+
+    refr(){
+        this.sSize = strokeSize;
+        this.isSticker = sticker;
+        this.emoji = emoj;
     }
 }
 
-let cur = new Line({x:0, y:0}, strokeSize, true);
+let cur = new Line({x:0, y:0}, true);
 
 
 const bTypes: button[] = [
     {label: "Undo", f(): void {undo()}}, 
     {label: "Redo", f(): void {redo()}}, 
     {label: "Clear", f(): void {fullClear()}}, 
-    {label: "2px Brush", f(): void {strokeSize = 2; cur.sSize = 2;}}, 
-    {label: "4px Brush", f(): void {strokeSize = 4; cur.sSize = 4;}},
-    {label: "8px Brush", f(): void {strokeSize = 8; cur.sSize = 8;}}];
+    {label: "2px Brush", f(): void {strokeSize = 2; sticker = false; cur.refr();}}, 
+    {label: "4px Brush", f(): void {strokeSize = 4; sticker = false; cur.refr();}},
+    {label: "8px Brush", f(): void {strokeSize = 8; sticker = false; cur.refr();}},
+    {label: "🐑 Sticker", f(): void {emoj = "🐑"; sticker = true; cur.refr();}},
+    {label: "👁️ Sticker", f(): void {emoj = "👁️"; sticker = true; cur.refr();}},
+    {label: "☄️ Sticker", f(): void {emoj = "☄️"; sticker = true; cur.refr();}}];
 
 const buttons: HTMLButtonElement[] = [];
 
@@ -125,7 +144,7 @@ canvas.addEventListener("drawing-changed", (e) => {
 function startDraw(p: point){
     cursor.active = true;
     redoLines = [];
-    lines.push(new Line(p, strokeSize));
+    lines.push(new Line(p, false));
 
 }
 
