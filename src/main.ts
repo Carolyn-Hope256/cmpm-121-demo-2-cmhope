@@ -12,9 +12,11 @@ app.innerHTML = APP_NAME;
 app.append(canvas);
 
 const drawEvent = new Event("drawing-changed");
+const moveEvent = new Event("tool-moved");
 
 const ctx = canvas.getContext("2d");
 ctx.strokeStyle = "#7a6eff"
+ctx.fillStyle = "#7a6eff"
 let strokeSize = 2;
 
 const cursor = { active: false, x: 0, y: 0 };
@@ -29,28 +31,26 @@ interface button{
     f(): void
 }
 
-const bTypes: button[] = [
-    {label: "Undo", f(): void {undo()}}, 
-    {label: "Redo", f(): void {redo()}}, 
-    {label: "Clear", f(): void {fullClear()}}, 
-    {label: "2px Brush", f(): void {strokeSize = 2}}, 
-    {label: "4px Brush", f(): void {strokeSize = 4}},
-    {label: "8px Brush", f(): void {strokeSize = 8}}];
-
-const buttons: HTMLButtonElement[] = [];
-
 
 class Line{
     pts: point[] =[];
     sSize: number;
+    cursor: boolean = false;
     
-    constructor(p: point, s: number){
+    constructor(p: point, s: number, c?: boolean){
         this.pts[0] = p;
         this.sSize = s;
+        if(c){
+            this.cursor = c;
+        }
     }
 
     drag(p: point){
-        this.pts.push(p);
+        if(this.cursor){
+            this.pts[0] = p;
+        }else{
+            this.pts.push(p);
+        }
     }
 
     display(con: CanvasRenderingContext2D){
@@ -62,9 +62,27 @@ class Line{
                 con.lineTo(p.x, p.y);
             }
             con.stroke();
+        }else if(this.cursor){
+            con.beginPath();
+            con.arc(this.pts[0].x, this.pts[0].y, this.sSize, 0, 2 * Math.PI);
+            con.fill();
+            
         }
     }
 }
+
+let cur = new Line({x:0, y:0}, strokeSize, true);
+
+
+const bTypes: button[] = [
+    {label: "Undo", f(): void {undo()}}, 
+    {label: "Redo", f(): void {redo()}}, 
+    {label: "Clear", f(): void {fullClear()}}, 
+    {label: "2px Brush", f(): void {strokeSize = 2; cur.sSize = 2;}}, 
+    {label: "4px Brush", f(): void {strokeSize = 4; cur.sSize = 4;}},
+    {label: "8px Brush", f(): void {strokeSize = 8; cur.sSize = 8;}}];
+
+const buttons: HTMLButtonElement[] = [];
 
 for(let i = 0; i < bTypes.length; i++){
     buttons[i] = document.createElement("button");
@@ -86,10 +104,17 @@ canvas.addEventListener("mousedown", (e) => {
 
 canvas.addEventListener("mousemove", (e) => {
     newPoint(e.offsetX, e.offsetY);
+    cur.drag({x: e.offsetX, y: e.offsetY});
+    console.log(cur.pts[0]);
+    canvas.dispatchEvent(moveEvent);
 });
 
 canvas.addEventListener("mouseup", (e) => {
     stopDraw();
+});
+
+canvas.addEventListener("tool-moved", (e) => {
+    draw();
 });
 
 canvas.addEventListener("drawing-changed", (e) => {
@@ -107,7 +132,6 @@ function startDraw(p: point){
 function newPoint(X: number, Y: number){
     if (cursor.active) {
         lines[lines.length-1].drag({x: X, y: Y})
-        //draw();
         canvas.dispatchEvent(drawEvent);
     }
 }
@@ -117,14 +141,16 @@ function draw(){
     for(const l of lines){
         l.display(ctx);
     }
-    //drawline(newLine);
+    if(!cursor.active){
+        cur.display(ctx);
+    }
 }
 
 function stopDraw(){
     cursor.active = false;
-    //lines.push(newLine);
-    newLine = [];
 }
+
+
 
 function clear(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -132,7 +158,6 @@ function clear(){
 
 function fullClear(){
     lines = [];
-    newLine = [];
     redoLines = [];
     canvas.dispatchEvent(drawEvent);
 }
