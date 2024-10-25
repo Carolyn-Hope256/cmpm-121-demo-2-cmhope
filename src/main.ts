@@ -15,6 +15,7 @@ const drawEvent = new Event("drawing-changed");
 
 const ctx = canvas.getContext("2d");
 ctx.strokeStyle = "#7a6eff"
+let strokeSize = 2;
 
 const cursor = { active: false, x: 0, y: 0 };
 
@@ -23,11 +24,29 @@ interface point{
     y: number
 }
 
+interface button{
+    label: string,
+    f(): void
+}
+
+const bTypes: button[] = [
+    {label: "Undo", f(): void {undo()}}, 
+    {label: "Redo", f(): void {redo()}}, 
+    {label: "Clear", f(): void {fullClear()}}, 
+    {label: "2px Brush", f(): void {strokeSize = 2}}, 
+    {label: "4px Brush", f(): void {strokeSize = 4}},
+    {label: "8px Brush", f(): void {strokeSize = 8}}];
+
+const buttons: HTMLButtonElement[] = [];
+
+
 class Line{
     pts: point[] =[];
+    sSize: number;
     
-    constructor(p: point){
+    constructor(p: point, s: number){
         this.pts[0] = p;
+        this.sSize = s;
     }
 
     drag(p: point){
@@ -36,6 +55,7 @@ class Line{
 
     display(con: CanvasRenderingContext2D){
         if(this.pts.length > 1){
+            con.lineWidth = this.sSize;
             con.beginPath();
             con.moveTo(this.pts[0].x, this.pts[0].y);
             for(const p of this.pts){
@@ -46,33 +66,18 @@ class Line{
     }
 }
 
+for(let i = 0; i < bTypes.length; i++){
+    buttons[i] = document.createElement("button");
+    buttons[i].innerHTML = bTypes[i].label;
+    buttons[i].onclick = function () {
+        bTypes[i].f();
+    };
+    app.append(buttons[i]);
+}
+
+
 let lines: Line[] = [];
 let redoLines: Line[] = [];
-let newLine: point[] = [];
-
-const undoButton = document.createElement("button");
-undoButton.innerHTML = "Undo";
-undoButton.onclick = function () {
-    undo();
-};
-app.append(undoButton);
-
-const redoButton = document.createElement("button");
-redoButton.innerHTML = "Redo";
-redoButton.onclick = function () {
-    redo();
-};
-app.append(redoButton);
-
-
-const clearButton = document.createElement("button");
-clearButton.innerHTML = "Clear";
-clearButton.onclick = function () {
-    fullClear();
-};
-app.append(clearButton);
-
-
 
 
 canvas.addEventListener("mousedown", (e) => {
@@ -95,7 +100,7 @@ canvas.addEventListener("drawing-changed", (e) => {
 function startDraw(p: point){
     cursor.active = true;
     redoLines = [];
-    lines.push(new Line(p));
+    lines.push(new Line(p, strokeSize));
 
 }
 
