@@ -97,6 +97,7 @@ const bTypes: button[] = [
     {label: "2px Brush", f(): void {strokeSize = 2; sticker = false; cur.refr();}}, 
     {label: "4px Brush", f(): void {strokeSize = 4; sticker = false; cur.refr();}},
     {label: "8px Brush", f(): void {strokeSize = 8; sticker = false; cur.refr();}},
+    {label: "Custom Sticker", f(): void {newSticker();}},
     {label: "🐑 Sticker", f(): void {emoj = "🐑"; sticker = true; cur.refr();}},
     {label: "👁️ Sticker", f(): void {emoj = "👁️"; sticker = true; cur.refr();}},
     {label: "☄️ Sticker", f(): void {emoj = "☄️"; sticker = true; cur.refr();}}];
@@ -193,5 +194,17 @@ function redo(){
         lines.push(redoLines.pop());
     }
     canvas.dispatchEvent(drawEvent);
+}
+
+function newSticker(){
+    const emoji: string = prompt("Provide an emoji link:","❤️");
+    buttons.push(document.createElement("button"));
+    buttons[buttons.length-1].innerHTML = emoji + " Sticker";
+    buttons[buttons.length-1].onclick = function () {
+        emoj = emoji;
+        sticker = true;
+        cur.refr();
+    };
+    app.append(buttons[buttons.length-1]);
 }
 
