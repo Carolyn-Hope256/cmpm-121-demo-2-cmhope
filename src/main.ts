@@ -15,8 +15,8 @@ const drawEvent = new Event("drawing-changed");
 const moveEvent = new Event("tool-moved");
 
 const ctx = canvas.getContext("2d");
-ctx.strokeStyle = "#7a6eff"
-ctx.fillStyle = "#7a6eff"
+ctx.strokeStyle = "#7a6eff";
+ctx.fillStyle = "#7a6eff";
 ctx.font = "30px Arial";
 
 let strokeSize: number = 2;
@@ -93,7 +93,8 @@ let cur = new Line({x:0, y:0}, true);
 const bTypes: button[] = [
     {label: "Undo", f(): void {undo()}}, 
     {label: "Redo", f(): void {redo()}}, 
-    {label: "Clear", f(): void {fullClear()}}, 
+    {label: "Clear", f(): void {fullClear()}},
+    {label: "Save", f(): void {save()}}, 
     {label: "2px Brush", f(): void {strokeSize = 2; sticker = false; cur.refr();}}, 
     {label: "4px Brush", f(): void {strokeSize = 4; sticker = false; cur.refr();}},
     {label: "8px Brush", f(): void {strokeSize = 8; sticker = false; cur.refr();}},
@@ -196,6 +197,30 @@ function redo(){
     canvas.dispatchEvent(drawEvent);
 }
 
+function save(){
+    const savcan = document.createElement("canvas");
+    savcan.width = 1024;
+    savcan.height = 1024;
+
+    const scon = savcan.getContext("2d");
+    scon.strokeStyle = "#7a6eff";
+    scon.fillStyle = "#7a6eff";
+    scon.font = "30px Arial";
+    scon.scale(2, 2);
+
+    clear();
+    for(const l of lines){
+        l.display(scon);
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = savcan.toDataURL("image/png");
+    anchor.download = "sketchpad.png";
+    anchor.click();
+
+
+}
+
 function newSticker(){
     const emoji: string = prompt("Provide an emoji link:","❤️");
     buttons.push(document.createElement("button"));
@@ -206,5 +231,6 @@ function newSticker(){
         cur.refr();
     };
     app.append(buttons[buttons.length-1]);
+    buttons[buttons.length-1].click();
 }
 
