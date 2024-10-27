@@ -15,9 +15,22 @@ const drawEvent = new Event("drawing-changed");
 const moveEvent = new Event("tool-moved");
 
 const ctx = canvas.getContext("2d");
-ctx.strokeStyle = "#7a6eff";
-ctx.fillStyle = "#7a6eff";
+
+
+//ctx.strokeStyle = "HSL(245,100%,72%)";
+//ctx.fillStyle = "HSL(245,100%,72%)";
 ctx.font = "30px Arial";
+
+const hText = document.createElement("text");
+hText.innerHTML = "Hue:";
+app.append(hText);
+
+const hSlider = document.createElement("input");
+hSlider.type = "range";
+hSlider.min = "0";
+hSlider.max = "360";
+hSlider.defaultValue = 245
+app.append(hSlider);
 
 let strokeSize: number = 2;
 let sticker: boolean = false;
@@ -42,6 +55,7 @@ class Line{
     isSticker: boolean;
     emoji: string;
     cursor: boolean = false;
+    color: string;
     
     constructor(p: point, c?: boolean){
         this.pts[0] = p;
@@ -51,6 +65,7 @@ class Line{
         if(c){
             this.cursor = c;
         }
+        this.color = "HSL("+ hSlider.value + ", 100%, 72%";
     }
 
     drag(p: point){
@@ -62,6 +77,11 @@ class Line{
     }
 
     display(con: CanvasRenderingContext2D){
+        con.strokeStyle = this.color;
+        con.fillStyle = this.color;
+        console.log(this.color)
+
+
         if(this.isSticker){
             con.fillText(this.emoji, this.pts[0].x, this.pts[0].y, 60);
         }else if(this.cursor){
@@ -84,6 +104,7 @@ class Line{
         this.sSize = strokeSize;
         this.isSticker = sticker;
         this.emoji = emoj;
+        this.color = hSlider.value + ", 100%, 72%";
     }
 }
 
@@ -141,6 +162,10 @@ canvas.addEventListener("tool-moved", (e) => {
 
 canvas.addEventListener("drawing-changed", (e) => {
     draw();
+});
+
+hSlider.addEventListener("input", (e) => {
+    cur.refr();
 });
 
 
