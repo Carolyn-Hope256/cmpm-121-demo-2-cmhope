@@ -95,6 +95,7 @@ const bTypes: button[] = [
     {label: "Redo", f(): void {redo()}}, 
     {label: "Clear", f(): void {fullClear()}},
     {label: "Save", f(): void {save()}}, 
+    {label: "1px Brush", f(): void {strokeSize = 1; sticker = false; cur.refr();}},
     {label: "2px Brush", f(): void {strokeSize = 2; sticker = false; cur.refr();}}, 
     {label: "4px Brush", f(): void {strokeSize = 4; sticker = false; cur.refr();}},
     {label: "8px Brush", f(): void {strokeSize = 8; sticker = false; cur.refr();}},
