@@ -21,16 +21,42 @@ const ctx = canvas.getContext("2d");
 //ctx.fillStyle = "HSL(245,100%,72%)";
 ctx.font = "30px Arial";
 
+// Create a container for the slider and color preview - lorraine
+const colorPickerContainer = document.createElement("div");
+colorPickerContainer.style.cssText = `
+  display: flex;
+  height: 100px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
 const hText = document.createElement("text");
 hText.innerHTML = "Hue:";
-app.append(hText);
+colorPickerContainer.append(hText);
 
 const hSlider = document.createElement("input");
 hSlider.type = "range";
 hSlider.min = "0";
 hSlider.max = "360";
-hSlider.defaultValue = 245
-app.append(hSlider);
+hSlider.defaultValue = "245";
+colorPickerContainer.append(hSlider);
+
+// Color preview container - lorraine
+const colorPreview = document.createElement("div");
+colorPreview.style.cssText = `
+  width: 30px;
+  height: 30px;
+  margin-left: 10px;
+  border: 1px solid #000;
+`;
+colorPickerContainer.append(colorPreview);
+
+// Add the color picker group to the app
+app.append(colorPickerContainer);
+
+// Set preview to default color on start - lorraine
+colorPreview.style.backgroundColor = `hsl(${hSlider.value}, 100%, 72%)`;
 
 let strokeSize: number = 2;
 let sticker: boolean = false;
@@ -104,7 +130,7 @@ class Line{
         this.sSize = strokeSize;
         this.isSticker = sticker;
         this.emoji = emoj;
-        this.color = hSlider.value + ", 100%, 72%";
+        this.color = "HSL(" + hSlider.value + ", 100%, 72%)";
     }
 }
 
@@ -166,6 +192,8 @@ canvas.addEventListener("drawing-changed", (e) => {
 
 hSlider.addEventListener("input", (e) => {
     cur.refr();
+    // Update the color preview - lorraine
+    colorPreview.style.backgroundColor = `hsl(${hSlider.value}, 100%, 72%)`;
 });
 
 
