@@ -1,68 +1,5 @@
 import "./style.css";
 
-const APP_NAME = "Soladraw!";
-const app = document.querySelector<HTMLDivElement>("#app")!;
-const canvas = document.createElement("canvas");
-canvas.width = 512;
-canvas.height = 512;
-
-
-document.title = APP_NAME;
-app.innerHTML = APP_NAME;
-app.append(canvas);
-
-const drawEvent = new Event("drawing-changed");
-const moveEvent = new Event("tool-moved");
-
-const ctx = canvas.getContext("2d");
-
-
-//ctx.strokeStyle = "HSL(245,100%,72%)";
-//ctx.fillStyle = "HSL(245,100%,72%)";
-ctx.font = "30px Arial";
-
-// Create a container for the slider and color preview - lorraine
-const colorPickerContainer = document.createElement("div");
-colorPickerContainer.style.cssText = `
-  display: flex;
-  height: 100px;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
-const hText = document.createElement("text");
-hText.innerHTML = "Hue:";
-colorPickerContainer.append(hText);
-
-const hSlider = document.createElement("input");
-hSlider.type = "range";
-hSlider.min = "0";
-hSlider.max = "360";
-hSlider.defaultValue = "245";
-colorPickerContainer.append(hSlider);
-
-// Color preview container - lorraine
-const colorPreview = document.createElement("div");
-colorPreview.style.cssText = `
-  width: 30px;
-  height: 30px;
-  margin-left: 10px;
-  border: 1px solid #000;
-`;
-colorPickerContainer.append(colorPreview);
-
-// Add the color picker group to the app
-app.append(colorPickerContainer);
-
-// Set preview to default color on start - lorraine
-colorPreview.style.backgroundColor = `hsl(${hSlider.value}, 100%, 72%)`;
-
-let strokeSize: number = 2;
-let sticker: boolean = false;
-let emoj: string = "";
-
-const cursor = { active: false, x: 0, y: 0 };
 
 interface point{
     x: number,
@@ -134,7 +71,68 @@ class Line{
     }
 }
 
-let cur = new Line({x:0, y:0}, true);
+const APP_NAME = "Soladraw!";
+const app = document.querySelector<HTMLDivElement>("#app")!;
+const canvas = document.createElement("canvas");
+canvas.width = 512;
+canvas.height = 512;
+
+const ctx = canvas.getContext("2d")!;
+//ctx.strokeStyle = "HSL(245,100%,72%)";
+//ctx.fillStyle = "HSL(245,100%,72%)";
+ctx.font = "30px Arial";
+
+document.title = APP_NAME;
+app.innerHTML = APP_NAME;
+app.append(canvas);
+
+const drawEvent = new Event("drawing-changed");
+const moveEvent = new Event("tool-moved");
+
+// Create a container for the slider and color preview - lorraine
+const colorPickerContainer = document.createElement("div");
+colorPickerContainer.style.cssText = `
+  display: flex;
+  height: 100px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+const hText = document.createElement("text");
+hText.innerHTML = "Hue:";
+colorPickerContainer.append(hText);
+
+const hSlider = document.createElement("input");
+hSlider.type = "range";
+hSlider.min = "0";
+hSlider.max = "360";
+hSlider.defaultValue = "245";
+colorPickerContainer.append(hSlider);
+
+// Color preview container - lorraine
+const colorPreview = document.createElement("div");
+colorPreview.style.cssText = `
+  width: 30px;
+  height: 30px;
+  margin-left: 10px;
+  border: 1px solid #000;
+`;
+colorPickerContainer.append(colorPreview);
+
+// Add the color picker group to the app
+app.append(colorPickerContainer);
+
+// Set preview to default color on start - lorraine
+colorPreview.style.backgroundColor = `hsl(${hSlider.value}, 100%, 72%)`;
+
+let strokeSize: number = 2;
+let sticker: boolean = false;
+let emoj: string = "";
+
+const cursor = { active: false, x: 0, y: 0 };
+
+const cur = new Line({x:0, y:0}, true);
 
 
 const bTypes: button[] = [
@@ -172,25 +170,25 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    newPoint(e.offsetX, e.offsetY);
+    dragMouse(e.offsetX, e.offsetY);
     cur.drag({x: e.offsetX, y: e.offsetY});
     console.log(cur.pts[0]);
     canvas.dispatchEvent(moveEvent);
 });
 
-canvas.addEventListener("mouseup", (e) => {
+canvas.addEventListener("mouseup", () => {
     stopDraw();
 });
 
-canvas.addEventListener("tool-moved", (e) => {
+canvas.addEventListener("tool-moved", () => {
     draw();
 });
 
-canvas.addEventListener("drawing-changed", (e) => {
+canvas.addEventListener("drawing-changed", () => {
     draw();
 });
 
-hSlider.addEventListener("input", (e) => {
+hSlider.addEventListener("input", () => {
     cur.refr();
     // Update the color preview - lorraine
     colorPreview.style.backgroundColor = `hsl(${hSlider.value}, 100%, 72%)`;
@@ -204,7 +202,7 @@ function startDraw(p: point){
 
 }
 
-function newPoint(X: number, Y: number){
+function dragMouse(X: number, Y: number){
     if (cursor.active) {
         lines[lines.length-1].drag({x: X, y: Y})
         canvas.dispatchEvent(drawEvent);
@@ -238,37 +236,39 @@ function fullClear(){
 }
 
 function undo(){
-    if(lines.length > 0){
-        redoLines.push(lines.pop());
+    const undoLine = lines.pop();
+    if(undoLine) {
+        redoLines.push(undoLine);
     }
     canvas.dispatchEvent(drawEvent);
 }
 
 function redo(){
-    if(redoLines.length > 0){
-        lines.push(redoLines.pop());
+    const redoLine = redoLines.pop()
+    if(redoLine){
+        lines.push(redoLine);
     }
     canvas.dispatchEvent(drawEvent);
 }
 
 function save(){
-    const savcan = document.createElement("canvas");
-    savcan.width = 1024;
-    savcan.height = 1024;
+    const savedCanvas = document.createElement("canvas");
+    savedCanvas.width = 1024;
+    savedCanvas.height = 1024;
 
-    const scon = savcan.getContext("2d");
-    scon.strokeStyle = "#7a6eff";
-    scon.fillStyle = "#7a6eff";
-    scon.font = "30px Arial";
-    scon.scale(2, 2);
+    const savedCanvasCtx = savedCanvas.getContext("2d")!;
+    savedCanvasCtx.strokeStyle = "#7a6eff";
+    savedCanvasCtx.fillStyle = "#7a6eff";
+    savedCanvasCtx.font = "30px Arial";
+    savedCanvasCtx.scale(2, 2);
 
     clear();
     for(const l of lines){
-        l.display(scon);
+        l.display(savedCanvasCtx);
     }
 
     const anchor = document.createElement("a");
-    anchor.href = savcan.toDataURL("image/png");
+    anchor.href = savedCanvas.toDataURL("image/png");
     anchor.download = "sketchpad.png";
     anchor.click();
 
@@ -276,7 +276,7 @@ function save(){
 }
 
 function newSticker(){
-    const emoji: string = prompt("Provide an emoji link:","❤️");
+    const emoji: string = prompt("Provide an emoji link:","❤️")!;
     buttons.push(document.createElement("button"));
     buttons[buttons.length-1].innerHTML = emoji + " Sticker";
     buttons[buttons.length-1].onclick = function () {
